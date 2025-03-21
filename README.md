@@ -4,7 +4,7 @@
 
 TreeForge is a VS Code extension that creates folder and file structures from text representations. It's perfect for quickly scaffolding projects, recreating structures from documentation, or setting up test environments.
 
-![TreeForge Demo](images/demo.gif)
+![TreeForge Demo](images/tuto.gif)
 
 ## Features
 
