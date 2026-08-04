@@ -29,6 +29,7 @@ All notable changes to the "TreeForge" extension will be documented in this file
 - Creation now uses the VS Code file system API instead of node's `fs`, so TreeForge works in remote, container and web workspaces and no longer blocks the UI.
 - Confirmation is a modal dialog showing the tree, the counts and any conflicts, instead of a toast plus a leftover untitled document.
 - Revealing the target folder in the OS file manager after creating is now opt-in.
+- New TreeForge logo, used as the extension icon and in the readme, with a matching gallery banner colour.
 - Minimum VS Code version raised to 1.85.0.
 
 ## [1.0.0] - 2025-03-20

@@ -30,7 +30,7 @@
   ],
   "icon": "images/icon.png",
   "galleryBanner": {
-    "color": "#1E3A8A",
+    "color": "#404A42",
     "theme": "dark"
   },
   "activationEvents": [],

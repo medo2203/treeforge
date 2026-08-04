@@ -1,6 +1,8 @@
-# TreeForge 🌲
+<p align="center">
+  <img src="images/logo.png" alt="TreeForge — Structure. Forged." width="640">
+</p>
 
-> Transform text structures into real folders and files with a single click
+<p align="center"><strong>Transform text structures into real folders and files with a single click</strong></p>
 
 TreeForge is a VS Code extension that creates folder and file structures from text representations. It's perfect for quickly scaffolding projects, recreating structures from documentation, or setting up test environments.
 
