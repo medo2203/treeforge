@@ -2,6 +2,8 @@ import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 
 export default [{
+    ignores: ["out/**", "dist/**", "node_modules/**", ".vscode-test/**"],
+}, {
     files: ["**/*.ts"],
 }, {
     plugins: {

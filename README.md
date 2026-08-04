@@ -9,33 +9,32 @@ TreeForge is a VS Code extension that creates folder and file structures from te
 ## Features
 
 - **Text to Structure**: Convert text representations of folder structures into actual folders and files
-- **Multiple Formats**: Support for indentation-based formats and tree visualization characters (┣, ┃, ┗, etc.)
-- **Structure Preview**: Preview the structure before creating it
-- **Simple Interface**: Right-click and select from the context menu to create or preview
-- **Smart Detection**: Automatically detect files vs folders
+- **Multiple Formats**: Box-drawing trees (`├──` and `┣`), ASCII trees (`|--`), markdown bullet lists, and plain space or tab indentation
+- **Non-destructive**: Existing files are never overwritten unless you ask for it
+- **Structure Preview**: See exactly what will be created, and what already exists, before anything is written
+- **Works Anywhere**: Uses the VS Code file system API, so it works in remote, container and web workspaces
+- **Smart Detection**: Knows that `Dockerfile` is a file and `.github` is a folder
 
 ## Usage
 
-1. **Input Your Structure**:
+1. **Input Your Structure**
 
    - Enter or paste a text representation of your desired folder structure
-   - Select the text (optional - if not selected, the entire document will be used)
+   - Select the text (optional — if nothing is selected, the whole document is used)
 
-2. **Create Structure**:
+2. **Create the Structure**
 
-   - Right-click and select "TreeForge: Create Folder Structure"
-   - Or use the Command Palette (Ctrl+Shift+P) and search for "TreeForge"
-   - Preview the structure and confirm
-   - Select a target location
+   - Right-click and choose **TreeForge: Create Folder Structure**, or run it from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+   - Review the preview, then confirm
+   - Pick a target folder — or skip this step entirely by right-clicking a folder in the Explorer and running TreeForge from there
    - Done! Your folders and files are created
 
-3. **Preview Only**:
-   - Right-click and select "TreeForge: Preview Structure"
-   - See what will be created without actually creating anything
+3. **Preview Only**
+   - Run **TreeForge: Preview Structure** to see what would be created, including any lines TreeForge had to skip, without touching the disk
 
 ## Supported Structure Formats
 
-TreeForge supports multiple ways to represent folder structures:
+TreeForge works out nesting from the column each name starts at, so all of these parse identically:
 
 ### Box-Drawing Characters (UTF-8)
 
@@ -44,8 +43,6 @@ project-root
  ┣ src
  ┃ ┣ components
  ┃ ┃ ┗ Button.js
- ┃ ┣ utils
- ┃ ┃ ┗ helpers.js
  ┃ ┗ App.js
  ┣ package.json
  ┗ README.md
@@ -55,53 +52,90 @@ project-root
 
 ```
 project-root
- ├── src
- │   ├── components
- │   │   └── Button.js
- │   ├── utils
- │   │   └── helpers.js
- │   └── App.js
- ├── package.json
- └── README.md
+├── src
+│   ├── components
+│   │   └── Button.js
+│   └── App.js
+├── package.json
+└── README.md
+```
+
+### ASCII Trees
+
+```
+project-root
+|-- src
+|   `-- App.js
+`-- package.json
+```
+
+### Markdown Lists
+
+```
+- project-root
+  - src
+    - App.js
+  - package.json
 ```
 
 ### Simple Indentation
+
+Tabs or any consistent number of spaces:
 
 ```
 project-root
   src
     components
       Button.js
-    utils
-      helpers.js
-    App.js
   package.json
-  README.md
 ```
+
+### Convenience Syntax
+
+- `src/` — a trailing slash always means a folder, even for names like `assets.old/`
+- `src/components/Button.js` — slash-separated paths expand into nested folders
+- `index.js  # entry point` — trailing `#` and `//` comments are stripped
+- Prose around a fenced code block is ignored, so you can paste an answer straight out of a chat window
+
+## Extension Settings
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| `treeforge.tabWidth` | `4` | How many columns a tab counts for when working out nesting depth |
+| `treeforge.onConflict` | `skip` | What to do when a file already exists: `skip`, `overwrite`, or `abort` |
+| `treeforge.revealInOSAfterCreate` | `false` | Reveal the target folder in the OS file manager after creating |
 
 ## Installation
 
 Install directly from the VS Code Marketplace:
 
 1. Open VS Code
-2. Go to Extensions (Ctrl+Shift+X)
+2. Go to Extensions (`Ctrl+Shift+X`)
 3. Search for "TreeForge"
 4. Click Install
 
 ## Requirements
 
-- Visual Studio Code version 1.60.0 or higher
-
-## Extension Settings
-
-This extension doesn't add any VS Code settings yet.
+- Visual Studio Code version 1.85.0 or higher
 
 ## Known Issues
 
-- Very complex folder structures with irregular indentation might not parse correctly
-- File detection is based on file extensions, so files without extensions might be detected as folders
+- A childless entry with no extension and no trailing slash is assumed to be a folder. Add a `/` to be explicit, or rely on the built-in list of conventional filenames (`Dockerfile`, `Makefile`, `LICENSE`, …).
+- A folder whose name ends in something that looks like an extension (`v1.2.0`, `assets.old`) is read as a file unless it has children or a trailing slash.
+- Files are always created empty; TreeForge does not yet fill in contents.
 
 ## Release Notes
+
+### 1.1.0
+
+- Rewrote the parser: nesting is now derived from the column a name starts at, which fixes `tree` output whose branches are padded with spaces, tab-indented structures, and ASCII trees
+- Existing files are no longer overwritten; conflicts are reported up front and controlled by `treeforge.onConflict`
+- Names that could escape the target folder (`..`, absolute paths, drive letters) are rejected
+- Registered **TreeForge: Preview Structure**, which was previously unreachable
+- Added an Explorer context menu entry that creates directly into the folder you right-click
+- Better file/folder detection for extensionless files and dot-folders
+- Trailing comments and `tree -F` indicators are stripped from names
+- Moved to the VS Code file system API, so TreeForge works in remote and web workspaces
 
 ### 1.0.0
 
@@ -112,8 +146,8 @@ This extension doesn't add any VS Code settings yet.
 
 ## Feedback & Contributions
 
-- File issues or feature requests on [GitHub](https://github.com/YOUR_USERNAME/treeforge)
-- Rate and review in the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=YOUR_PUBLISHER_ID.treeforge)
+- File issues or feature requests on [GitHub](https://github.com/medo2203/treeforge/issues)
+- Rate and review in the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=MohamedBouzraa.treeforge)
 
 ## License
 

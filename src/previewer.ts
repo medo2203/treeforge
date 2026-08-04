@@ -1,54 +1,91 @@
 import * as vscode from "vscode";
-import { FolderStructure, PreviewResult } from "./types";
+import { ParseResult, PreviewResult } from "./types";
 import { countFilesAndFolders, renderStructurePreview } from "./parser";
 
+/** Lines of tree to show inside the confirmation dialog before truncating */
+const MAX_DIALOG_LINES = 30;
+
 /**
- * Show a preview of the structure in a new editor tab
+ * Ask the user to confirm, showing the tree, the counts, anything the parser
+ * had to skip, and anything that already exists at the target.
+ *
+ * This is a modal dialog rather than the toast v1.0 used, so that dismissing it
+ * by accident cannot be mistaken for a decision, and so that no untitled
+ * document is left behind.
  */
-export async function showStructurePreview(
-  structure: FolderStructure
+export async function confirmCreation(
+  parsed: ParseResult,
+  conflicts: string[],
+  target: vscode.Uri
 ): Promise<PreviewResult> {
-  // Create a pretty representation of the structure
-  let preview = "# TreeForge Structure Preview\n\n";
-  preview += "```\n";
-  preview += renderStructurePreview(structure);
-  preview += "```\n\n";
+  const counts = countFilesAndFolders(parsed.nodes);
+  const tree = renderStructurePreview(parsed.nodes).trimEnd().split("\n");
 
-  // Count the files and folders
-  const counts = countFilesAndFolders(structure);
-  preview += `This will create ${counts.folders} folders and ${counts.files} files.\n\n`;
+  const shown = tree.slice(0, MAX_DIALOG_LINES).join("\n");
+  const hidden = tree.length - MAX_DIALOG_LINES;
 
-  // Add buttons for confirmation
-  preview +=
-    'Click "Proceed with Creation" to select a target location, or close this tab to cancel.\n\n';
+  let detail = shown;
+  if (hidden > 0) {
+    detail += `\n… and ${hidden} more ${hidden === 1 ? "entry" : "entries"}`;
+  }
 
-  // Add credit to the author
-  preview += "---\n";
-  preview +=
-    "TreeForge - Created by Mohamed Bouzraa ([@medo2203](https://github.com/medo2203))\n";
+  detail += `\n\nInto: ${target.fsPath}`;
+  detail += `\nCreates ${counts.folders} ${
+    counts.folders === 1 ? "folder" : "folders"
+  } and ${counts.files} ${counts.files === 1 ? "file" : "files"}.`;
 
-  // Create a new untitled document with the preview
+  if (conflicts.length > 0) {
+    const listed = conflicts.slice(0, 5).join(", ");
+    const more = conflicts.length > 5 ? `, +${conflicts.length - 5} more` : "";
+    detail += `\n\nAlready exists (left untouched): ${listed}${more}`;
+  }
+
+  if (parsed.warnings.length > 0) {
+    detail += `\n\n${parsed.warnings.length} ${
+      parsed.warnings.length === 1 ? "line was" : "lines were"
+    } skipped. Run "TreeForge: Preview Structure" for details.`;
+  }
+
+  const choice = await vscode.window.showInformationMessage(
+    "Create this structure?",
+    { modal: true, detail },
+    "Create"
+  );
+
+  return choice === "Create" ? "confirm" : "cancel";
+}
+
+/**
+ * Open the parsed structure as a markdown document, without creating anything
+ */
+export async function openStructurePreview(
+  parsed: ParseResult
+): Promise<void> {
+  const counts = countFilesAndFolders(parsed.nodes);
+
+  let content = "# TreeForge Structure Preview\n\n";
+  content += "```\n";
+  content += renderStructurePreview(parsed.nodes) || "(nothing to create)\n";
+  content += "```\n\n";
+  content += `This would create ${counts.folders} ${
+    counts.folders === 1 ? "folder" : "folders"
+  } and ${counts.files} ${counts.files === 1 ? "file" : "files"}.\n`;
+
+  if (parsed.warnings.length > 0) {
+    content += "\n## Skipped lines\n\n";
+    for (const warning of parsed.warnings) {
+      content += `- Line ${warning.line}: ${warning.message} — \`${warning.text}\`\n`;
+    }
+  }
+
+  content += "\n---\n";
+  content +=
+    "TreeForge — created by Mohamed Bouzraa ([@medo2203](https://github.com/medo2203))\n";
+
   const document = await vscode.workspace.openTextDocument({
-    content: preview,
+    content,
     language: "markdown",
   });
 
-  await vscode.window.showTextDocument(document);
-
-  // Add buttons to the editor using notifications
-  return new Promise<PreviewResult>((resolve) => {
-    vscode.window
-      .showInformationMessage(
-        "TreeForge Preview - Ready to create this structure?",
-        "Proceed with Creation",
-        "Cancel"
-      )
-      .then((selection) => {
-        if (selection === "Proceed with Creation") {
-          resolve("confirm");
-        } else {
-          resolve("cancel");
-        }
-      });
-  });
+  await vscode.window.showTextDocument(document, { preview: true });
 }
